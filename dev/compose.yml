@@ -1,0 +1,27 @@
+name: grainy-dev
+services:
+  db:
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_USER: grainy
+      POSTGRES_PASSWORD: grainy
+      POSTGRES_DB: grainy
+    ports:
+      - "5432:5432"
+    volumes:
+      - grainy-db:/var/lib/postgresql
+  db-proxy:
+    image: kvqn/db-proxy:latest
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USERNAME: grainy
+      DATABASE_PASSWORD: grainy
+      DATABASE_DB: grainy
+      TOKEN: token
+    depends_on:
+      - db
+    ports:
+      - "8080:80"
+volumes:
+  grainy-db:
