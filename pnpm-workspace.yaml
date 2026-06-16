@@ -1,2 +1,7 @@
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+  workerd: true
 nodeVersion: "26.3.0"
 saveExact: true
