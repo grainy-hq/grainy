@@ -1,47 +1,47 @@
-# OpenNext Starter
+# Grainy
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+Grainy is a Next.js app deployed to Cloudflare Workers with OpenNext. It uses Better Auth, Drizzle ORM, PostgreSQL, Tailwind CSS, ESLint, Prettier, and pnpm.
 
-## Getting Started
+## Getting started
 
-Read the documentation at https://opennext.js.org/cloudflare.
-
-## Develop
-
-Run the Next.js development server:
+Install dependencies:
 
 ```bash
-npm run dev
-# or similar package manager command
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-## Preview
-
-Preview the application locally on the Cloudflare runtime:
+Create a local environment file and start the local database/proxy services:
 
 ```bash
-npm run preview
-# or similar package manager command
+cp .env.example .env.local
+docker compose -f dev/compose.yml up
 ```
 
-## Deploy
-
-Deploy the application to Cloudflare:
+In another terminal, start the app:
 
 ```bash
-npm run deploy
-# or similar package manager command
+pnpm dev
 ```
 
-## Learn More
+Open http://localhost:3000.
 
-To learn more about Next.js, take a look at the following resources:
+## Useful commands
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+pnpm dev             # Start Next.js locally
+pnpm build           # Build the Next.js app
+pnpm lint            # Run ESLint
+pnpm typecheck       # Run TypeScript checks
+pnpm format:check    # Check formatting
+pnpm preview         # Build and preview on the Cloudflare runtime
+pnpm deploy          # Build and deploy to Cloudflare
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project structure
+
+- `src/app` - Next.js App Router pages and API routes
+- `src/lib/auth` - Better Auth server configuration
+- `src/lib/db` - Drizzle database client and schema
+- `drizzle` - Generated SQL migrations
+- `dev/compose.yml` - Local PostgreSQL, migration, and database proxy services
+- `wrangler.jsonc` - Cloudflare Worker/OpenNext deployment configuration
