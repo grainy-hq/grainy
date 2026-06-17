@@ -27,11 +27,7 @@ services:
   db-proxy:
     image: kvqn/db-proxy:latest
     environment:
-      DATABASE_HOST: db
-      DATABASE_PORT: 5432
-      DATABASE_USERNAME: grainy
-      DATABASE_PASSWORD: grainy
-      DATABASE_DB: grainy
+      DATABASE_URL: postgres://grainy:grainy@db:5432/grainy
       TOKEN: token
     depends_on:
       db:
