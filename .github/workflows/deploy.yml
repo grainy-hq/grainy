@@ -103,13 +103,14 @@ jobs:
         shell: bash
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           COMMIT_SHA: ${{ github.sha }}
           INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
         run: |
           set -uo pipefail
+          INFRA_REPO_ROOT="${INFRA_REPO_ROOT:-/root/grainy/infra}"
           set +e
-          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" \
+          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USERNAME}@${SSH_HOST}" \
             "${INFRA_REPO_ROOT}/scripts/check-migrations.sh '${COMMIT_SHA}'"
           rc=$?
           set -e
@@ -164,12 +165,13 @@ jobs:
         shell: bash
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_USERNAME: ${{ secrets.SSH_USERNAME }}
           COMMIT_SHA: ${{ github.sha }}
           INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
         run: |
           set -euo pipefail
-          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" \
+          INFRA_REPO_ROOT="${INFRA_REPO_ROOT:-/root/grainy/infra}"
+          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USERNAME}@${SSH_HOST}" \
             "${INFRA_REPO_ROOT}/scripts/deploy-prod.sh '${COMMIT_SHA}'"
           echo "### Migrations applied for ${COMMIT_SHA}" >> "${GITHUB_STEP_SUMMARY}"
 
