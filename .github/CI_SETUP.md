@@ -4,7 +4,7 @@ This document covers setup, maintenance, and troubleshooting for the GitHub Acti
 
 ## Required GitHub Secrets
 
-Both secrets below are consumed only by the `deploy` job in `.github/workflows/deploy.yml`, and they are scoped to the single "Deploy via OpenNext + Wrangler" step via the `env:` block. They are never exposed to the CI workflow.
+Both secrets below are consumed only by the `deploy` job in `.github/workflows/ci.yml`, and they are scoped to the single "Deploy via OpenNext + Wrangler" step via the `env:` block. They are never exposed to the `format`, `lint`, or `typecheck` jobs.
 
 ### `CLOUDFLARE_API_TOKEN`
 
@@ -26,29 +26,22 @@ Identifies which Cloudflare account Wrangler should target. The account ID is no
 3. Copy the "Account ID" shown in the right sidebar of the account home page.
 4. In the repository, go to Settings, Secrets and variables, Actions, New repository secret. Name it `CLOUDFLARE_ACCOUNT_ID` and paste the value.
 
-If either secret is missing, the `deploy` job fails at the Wrangler step. The CI workflow (`format`, `lint`, `typecheck`) does not read these secrets and keeps running regardless.
+If either secret is missing, the `deploy` job fails at the Wrangler step. The `format`, `lint`, and `typecheck` jobs do not read these secrets and keep running regardless.
 
 ## Workflow Overview
 
-Two workflows live under `.github/workflows/`. CI gates every change, deploy ships validated code to production.
+A single workflow lives under `.github/workflows/`. `ci.yml` gates every change and, on push to `main`, ships validated code to production from the same run.
 
 ### `ci.yml`
 
-Triggered on push to any branch and on pull_request targeting `main`. Runs three jobs in parallel. Each job installs dependencies via `pnpm install --frozen-lockfile` and pins Node to `26.3.0`.
+Triggered on push to any branch and on pull_request. Runs four jobs. Each job installs dependencies via `pnpm install --frozen-lockfile` and pins Node to `26.3.0`.
 
 - `format`: runs `pnpm format:check` to verify Prettier formatting. Fails if any tracked file would be rewritten.
 - `lint`: runs `pnpm lint`, which executes `eslint . --no-cache` against the eslint-config-next flat config. The legacy `next lint` command was removed in Next 16, so the workflow calls ESLint directly.
 - `typecheck`: runs `pnpm cf-typegen` to regenerate Cloudflare bindings, then `pnpm exec opennextjs-cloudflare build` to produce the `.open-next/` output, then `tsc --noEmit`. The build step is required because `cloudflare-env.d.ts` imports types from `.open-next/worker`, which only exists after a successful OpenNext build. Skipping the build causes `tsc` to fail with "Cannot find module './.open-next/worker'".
+- `deploy`: gated by `needs: [format, lint, typecheck]` and `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`. Runs only on push to `main` after all three checks pass. It runs in the same CI workflow run as the gates, so the deploy result appears as a check on the same commit alongside `format`, `lint`, and `typecheck`. The job runs `pnpm install --frozen-lockfile`, `pnpm cf-typegen`, then `pnpm run deploy`, which expands to `opennextjs-cloudflare build && opennextjs-cloudflare deploy`. Wrangler reads `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` from the step's `env:` block and publishes the `grainy` Worker. The job targets the `deployment` environment, so any environment protection rules configured in GitHub (manual approval, wait timer, required reviewers) apply on top of the gate jobs.
 
-The workflow caches `.next/cache` and `.open-next` between runs, keyed on `pnpm-lock.yaml` and on hashes of source and config files, to keep the typecheck job under its 15 minute timeout.
-
-### `deploy.yml`
-
-Triggered by `workflow_run` when the `CI` workflow completes on the `main` branch. The single `deploy` job runs only if `github.event.workflow_run.conclusion == 'success'` and `github.event.workflow_run.head_branch == 'main'`. It checks out the exact commit that CI validated (`github.event.workflow_run.head_sha`) so the deployed code matches the commit that passed gates.
-
-The job runs `pnpm install --frozen-lockfile`, `pnpm cf-typegen`, then `pnpm run deploy`, which expands to `opennextjs-cloudflare build && opennextjs-cloudflare deploy`. Wrangler reads `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` from the step's `env:` block and publishes the `grainy` Worker.
-
-The deploy job uses the `production` environment, so any environment protection rules configured in GitHub (manual approval, wait timer, required reviewers) apply on top of the CI gate.
+The workflow caches `.next/cache` and `.open-next` between runs, keyed on `pnpm-lock.yaml` and on hashes of source and config files, to keep the typecheck job under its 15 minute timeout. The deploy job uses a separate cache key prefix so its build output does not evict the typecheck cache.
 
 ## Recommended Branch Protection
 
@@ -81,7 +74,7 @@ If `pnpm format:check` reports diffs, run `pnpm format` to apply them. If `pnpm 
 
 ## Manual Database Migrations
 
-Schema migrations are deliberately kept out of every workflow. Neither `ci.yml` nor `deploy.yml` runs `drizzle-kit` against the database. This is by design: automated migrations make it easy to drop a column on production by merging a pull request. Manual control gives the operator a chance to inspect the generated SQL, run it against the right environment, and roll back if needed.
+Schema migrations are deliberately kept out of the workflow. `ci.yml` does not run `drizzle-kit` against the database in any job. This is by design: automated migrations make it easy to drop a column on production by merging a pull request. Manual control gives the operator a chance to inspect the generated SQL, run it against the right environment, and roll back if needed.
 
 The migration toolchain is `drizzle-kit` against PostgreSQL.
 
@@ -122,19 +115,15 @@ The `opennextjs-cloudflare build` step did not run or did not finish. The `cloud
 
 ### Deploy job skipped or did not run
 
-The deploy workflow runs only when the `CI` workflow concludes with `success` on `main`. If CI failed, was cancelled, or ran on a different branch, the deploy job is skipped by its `if:` condition. Open the CI run for the merge commit and confirm `conclusion == 'success'`. If CI did not run at all, check that the push to `main` actually triggered it (workflow files on the default branch are the source of truth).
+The `deploy` job runs only when `github.event_name == 'push'` and `github.ref == 'refs/heads/main'`, and only after `format`, `lint`, and `typecheck` all succeed (via `needs:`). Pull request runs and pushes to other branches skip the job by its `if:` condition. If any gate fails or is cancelled, `needs:` holds the deploy job back and it is reported as skipped. Open the CI run for the merge commit, confirm the event was a push to `main`, and that all three gate jobs concluded with success. If CI did not run at all, check that the push to `main` actually triggered it (workflow files on the default branch are the source of truth).
 
 ### `error: not authenticated` from Wrangler
 
-`CLOUDFLARE_API_TOKEN` is missing, expired, revoked, or scoped without `Account.Workers Scripts:Edit`. Recreate the token using the "Edit Cloudflare Workers" template, confirm it targets the right account, and update the GitHub secret. Then re-run the deploy job from the Actions tab.
+`CLOUDFLARE_API_TOKEN` is missing, expired, revoked, or scoped without `Account.Workers Scripts:Edit`. Recreate the token using the "Edit Cloudflare Workers" template, confirm it targets the right account, and update the GitHub secret. Then re-run the `deploy` job from the Actions tab.
 
 ### `cancel-in-progress: the expression...` warning
 
 GitHub Actions evaluates the `cancel-in-progress` expression at queue time. The CI workflow uses `cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}` so that feature branches deduplicate runs while `main` does not. The warning is informational and no action is needed.
-
-### `Workflow not found` in deploy.yml
-
-The deploy workflow references the CI workflow by name (`workflows: [CI]`). This match is case-sensitive and reads the `name:` field at the top of `ci.yml`. If you rename CI, update the array in `deploy.yml` to the same string in the same commit, otherwise the deploy trigger silently stops firing.
 
 ### Cache misses on the typecheck job
 
@@ -146,6 +135,6 @@ Workflow changes need extra care because GitHub Actions has security rules that 
 
 - A pull request that edits a file under `.github/workflows/` runs the version of the workflow that is already on the base branch, not the version proposed in the PR. This protects secrets from untrusted forks. The new workflow only takes effect on the next push or pull_request after merge.
 - Test workflow changes on a long-lived feature branch first. Push the change, watch the CI runs on that branch, iterate until green, then open the PR.
-- Keep `ci.yml` and `deploy.yml` consistent. The Node version is pinned in three places: `node-version: "26.3.0"` in `ci.yml`, the same line in `deploy.yml`, and `nodeVersion` in `pnpm-workspace.yaml`. When you bump Node, update all three in the same commit, or local installs will drift from CI.
-- Do not add new secrets to the CI workflow. Secrets belong to the deploy job, scoped to the step that needs them. Adding them to CI widens the blast radius if a pull request introduces a malicious build step.
-- If you rename a job ID in `ci.yml`, update branch protection in GitHub Settings to match. A status check that no longer exists silently stops blocking merges.
+- Keep the Node version consistent. It is pinned in two places: `node-version: "26.3.0"` in `ci.yml` (referenced by every job, including `deploy`) and `nodeVersion` in `pnpm-workspace.yaml`. When you bump Node, update both in the same commit, or local installs will drift from CI.
+- Do not add new secrets to the `format`, `lint`, or `typecheck` jobs. Secrets belong to the `deploy` job, scoped to the step that needs them. Adding them to a gate job widens the blast radius if a pull request introduces a malicious build step.
+- If you rename a job ID in `ci.yml`, update branch protection in GitHub Settings to match. A status check that no longer exists silently stops blocking merges. If you rename the `deploy` job, also update `needs:` references in any future jobs that depend on it.
