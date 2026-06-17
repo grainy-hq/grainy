@@ -1,0 +1,30 @@
+# Secrets — MUST be excluded so they don't shadow runtime env vars in containers
+.env
+.env.*
+!.env.example
+
+# Local dev artifacts
+node_modules
+.next
+.open-next
+.wrangler
+.vercel
+.dev.vars
+.dev.vars.*
+
+# Git / IDE / OS
+.git
+.gitignore
+.vscode
+.DS_Store
+
+# Build/cache
+*.tsbuildinfo
+/coverage
+/build
+/out
+
+# Agent state
+.sisyphus
+.omo
+.cache
