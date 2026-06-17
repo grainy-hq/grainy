@@ -108,6 +108,7 @@ jobs:
           INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
         run: |
           set -uo pipefail
+          SSH_USERNAME="${SSH_USERNAME:-root}"
           INFRA_REPO_ROOT="${INFRA_REPO_ROOT:-/root/grainy/infra}"
           set +e
           ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USERNAME}@${SSH_HOST}" \
@@ -170,6 +171,7 @@ jobs:
           INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
         run: |
           set -euo pipefail
+          SSH_USERNAME="${SSH_USERNAME:-root}"
           INFRA_REPO_ROOT="${INFRA_REPO_ROOT:-/root/grainy/infra}"
           ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USERNAME}@${SSH_HOST}" \
             "${INFRA_REPO_ROOT}/scripts/deploy-prod.sh '${COMMIT_SHA}'"
