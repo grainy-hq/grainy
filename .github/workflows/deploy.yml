@@ -1,0 +1,207 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    name: Format (prettier)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.3.0"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+
+  lint:
+    name: Lint (eslint)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.3.0"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+
+  typecheck:
+    name: Typecheck (tsc + opennext build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SKIP_ENV_VALIDATION: "true"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.3.0"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+            .open-next
+          key: nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**/*.{ts,tsx,js,jsx}', 'next.config.ts', 'open-next.config.ts') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+      - run: pnpm cf-typegen
+      - run: pnpm exec opennextjs-cloudflare build
+      - run: pnpm typecheck
+
+  detect-migrations:
+    name: Detect pending DB migrations
+    needs: [format, lint, typecheck]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: detect-migrations
+    outputs:
+      has-pending: ${{ steps.check.outputs.has-pending }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - name: Set up Tailscale (ephemeral CI node)
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Check for pending migrations
+        id: check
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          COMMIT_SHA: ${{ github.sha }}
+          INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
+        run: |
+          set -uo pipefail
+          set +e
+          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" \
+            "${INFRA_REPO_ROOT}/scripts/check-migrations.sh '${COMMIT_SHA}'"
+          rc=$?
+          set -e
+          case "${rc}" in
+            0)
+              echo "No pending migrations."
+              echo "has-pending=false" >> "${GITHUB_OUTPUT}"
+              echo "### Migration check: no pending migrations" >> "${GITHUB_STEP_SUMMARY}"
+              ;;
+            1)
+              echo "Pending migrations detected; approval required."
+              echo "has-pending=true" >> "${GITHUB_OUTPUT}"
+              echo "### Migration check: pending migrations - approval required" >> "${GITHUB_STEP_SUMMARY}"
+              ;;
+            *)
+              echo "::error::check-migrations.sh exited with ${rc}; treating as failure."
+              echo "### Migration check: error (exit ${rc})" >> "${GITHUB_STEP_SUMMARY}"
+              exit "${rc}"
+              ;;
+          esac
+
+  apply-migrations:
+    name: Apply DB migrations (requires owner approval)
+    needs: [detect-migrations]
+    if: ${{ needs.detect-migrations.outputs.has-pending == 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment:
+      name: apply-migrations
+    permissions:
+      contents: read
+    steps:
+      - name: Set up Tailscale (ephemeral CI node)
+        uses: tailscale/github-action@v3
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+      - name: Apply migrations via deploy-prod.sh
+        shell: bash
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          COMMIT_SHA: ${{ github.sha }}
+          INFRA_REPO_ROOT: ${{ vars.INFRA_REPO_ROOT }}
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -i ~/.ssh/id_ed25519 "${SSH_USER}@${SSH_HOST}" \
+            "${INFRA_REPO_ROOT}/scripts/deploy-prod.sh '${COMMIT_SHA}'"
+          echo "### Migrations applied for ${COMMIT_SHA}" >> "${GITHUB_STEP_SUMMARY}"
+
+  deploy:
+    name: Deploy to Cloudflare Workers
+    needs: [format, lint, typecheck, detect-migrations, apply-migrations]
+    if: ${{ always() && needs.format.result == 'success' && needs.lint.result == 'success' && needs.typecheck.result == 'success' && needs.detect-migrations.result == 'success' && (needs.apply-migrations.result == 'success' || needs.apply-migrations.result == 'skipped') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: deployment
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.3.0"
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: |
+            .next/cache
+            .open-next
+          key: nextjs-deploy-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**/*.{ts,tsx,js,jsx}', 'next.config.ts', 'open-next.config.ts') }}
+          restore-keys: |
+            nextjs-deploy-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}-
+      - run: pnpm cf-typegen
+      - name: Deploy via OpenNext + Wrangler
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm run deploy
