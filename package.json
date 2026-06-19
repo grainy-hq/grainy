@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint . --no-cache",
     "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/patch-opennext.mjs",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
