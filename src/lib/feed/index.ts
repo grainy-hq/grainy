@@ -78,9 +78,7 @@ async function enrichPosts(
 
   const authorMap = new Map(authors.map((a) => [a.id, a]))
   const wowCountMap = new Map(wowCounts.map((w) => [w.postId, w.count]))
-  const commentCountMap = new Map(
-    commentCounts.map((c) => [c.postId, c.count]),
-  )
+  const commentCountMap = new Map(commentCounts.map((c) => [c.postId, c.count]))
   const wowedSet = new Set(userWows.map((w) => w.postId))
   const favoritedSet = new Set(userFavorites.map((f) => f.postId))
 
@@ -148,9 +146,7 @@ export async function getFeed(
 
     if (exploreRows.length > 0) {
       const explorePostIds = exploreRows.map((p) => p.id)
-      const exploreAuthorIds = [
-        ...new Set(exploreRows.map((p) => p.authorId)),
-      ]
+      const exploreAuthorIds = [...new Set(exploreRows.map((p) => p.authorId))]
 
       const [exploreAuthors, exploreWowCounts, exploreUserWows] =
         await Promise.all([
@@ -171,15 +167,11 @@ export async function getFeed(
             ),
         ])
 
-      const exploreAuthorMap = new Map(
-        exploreAuthors.map((a) => [a.id, a]),
-      )
+      const exploreAuthorMap = new Map(exploreAuthors.map((a) => [a.id, a]))
       const exploreWowMap = new Map(
         exploreWowCounts.map((w) => [w.postId, w.count]),
       )
-      const exploreWowedSet = new Set(
-        exploreUserWows.map((w) => w.postId),
-      )
+      const exploreWowedSet = new Set(exploreUserWows.map((w) => w.postId))
 
       const exploreFeedPosts: FeedPost[] = exploreRows.map((p) => {
         const author = exploreAuthorMap.get(p.authorId)!

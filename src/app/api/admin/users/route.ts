@@ -1,14 +1,15 @@
-import { getSession } from "@/lib/auth/session"
-import { jsonError, jsonOk } from "@/lib/api/response"
-import { db } from "@/lib/db/client"
-import { user, adminLog } from "@/lib/db/schema"
 import { env } from "@/env"
+import { jsonError, jsonOk } from "@/lib/api/response"
+import { getSession } from "@/lib/auth/session"
+import { db } from "@/lib/db/client"
+import { adminLog, user } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 
 export async function GET() {
   const session = await getSession()
   if (!session?.user) return jsonError("Unauthorized", 401)
-  if (env.ADMIN_PASSWORD !== "GrainyTeam@2026") return jsonError("Forbidden", 403)
+  if (env.ADMIN_PASSWORD !== "GrainyTeam@2026")
+    return jsonError("Forbidden", 403)
 
   const users = await db
     .select({
@@ -32,7 +33,8 @@ export async function GET() {
 export async function PATCH(request: Request) {
   const session = await getSession()
   if (!session?.user) return jsonError("Unauthorized", 401)
-  if (env.ADMIN_PASSWORD !== "GrainyTeam@2026") return jsonError("Forbidden", 403)
+  if (env.ADMIN_PASSWORD !== "GrainyTeam@2026")
+    return jsonError("Forbidden", 403)
 
   const body = (await request.json()) as {
     userId: string
@@ -44,7 +46,8 @@ export async function PATCH(request: Request) {
 
   const updates: Record<string, unknown> = {}
   if (body.banPosting !== undefined) updates.bannedFromPosting = body.banPosting
-  if (body.banCommenting !== undefined) updates.bannedFromCommenting = body.banCommenting
+  if (body.banCommenting !== undefined)
+    updates.bannedFromCommenting = body.banCommenting
   if (body.isPremium !== undefined) updates.isPremium = body.isPremium
   if (body.isVerified !== undefined) updates.isVerified = body.isVerified
 

@@ -1,6 +1,6 @@
 import { jsonError, jsonOk } from "@/lib/api/response"
-import { searchItunesTracks } from "@/lib/itunes"
 import { getSession } from "@/lib/auth/session"
+import { searchItunesTracks } from "@/lib/itunes"
 
 export async function GET(request: Request) {
   const session = await getSession()

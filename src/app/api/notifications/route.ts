@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth/session"
 import { jsonError, jsonOk } from "@/lib/api/response"
+import { getSession } from "@/lib/auth/session"
 import { db } from "@/lib/db/client"
 import { comment, friendRequest, post, user, wow } from "@/lib/db/schema"
 import { and, desc, eq, inArray, ne, sql } from "drizzle-orm"
@@ -42,7 +42,9 @@ export async function GET(request: Request) {
           and(
             eq(friendRequest.receiverId, userId),
             eq(friendRequest.status, "pending"),
-            since ? sql`${friendRequest.createdAt} > ${new Date(since)}` : undefined,
+            since
+              ? sql`${friendRequest.createdAt} > ${new Date(since)}`
+              : undefined,
           ),
         ),
       db
@@ -56,7 +58,9 @@ export async function GET(request: Request) {
           and(
             eq(friendRequest.senderId, userId),
             eq(friendRequest.status, "accepted"),
-            since ? sql`${friendRequest.updatedAt} > ${new Date(since)}` : undefined,
+            since
+              ? sql`${friendRequest.updatedAt} > ${new Date(since)}`
+              : undefined,
           ),
         )
         .orderBy(desc(friendRequest.updatedAt))
@@ -157,7 +161,10 @@ export async function GET(request: Request) {
           ? "wowed your post"
           : `and ${uniqueUsers.length - 1} others wowed your post`,
       actor: mapActor(actorMap.get(first.userId)),
-      actors: uniqueUsers.slice(0, 3).map((w) => mapActor(actorMap.get(w.userId))).filter(Boolean) as NotificationItem["actors"],
+      actors: uniqueUsers
+        .slice(0, 3)
+        .map((w) => mapActor(actorMap.get(w.userId)))
+        .filter(Boolean) as NotificationItem["actors"],
       count: uniqueUsers.length,
       postId,
       createdAt: safeDate(first.createdAt),
@@ -171,7 +178,9 @@ export async function GET(request: Request) {
     groupedComments.set(c.postId, group)
   }
   for (const [postId, comments] of groupedComments) {
-    const uniqueUsers = [...new Map(comments.map((c) => [c.authorId, c])).values()]
+    const uniqueUsers = [
+      ...new Map(comments.map((c) => [c.authorId, c])).values(),
+    ]
     const first = uniqueUsers[0]
     notifications.push({
       id: `cm_${postId}`,
@@ -181,7 +190,10 @@ export async function GET(request: Request) {
           ? "commented on your post"
           : `and ${uniqueUsers.length - 1} others commented on your post`,
       actor: mapActor(actorMap.get(first.authorId)),
-      actors: uniqueUsers.slice(0, 3).map((c) => mapActor(actorMap.get(c.authorId))).filter(Boolean) as NotificationItem["actors"],
+      actors: uniqueUsers
+        .slice(0, 3)
+        .map((c) => mapActor(actorMap.get(c.authorId)))
+        .filter(Boolean) as NotificationItem["actors"],
       count: uniqueUsers.length,
       postId,
       createdAt: safeDate(first.createdAt),
@@ -189,8 +201,7 @@ export async function GET(request: Request) {
   }
 
   notifications.sort(
-    (a, b) =>
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
   )
 
   return jsonOk({ notifications: notifications.slice(0, 30), now })

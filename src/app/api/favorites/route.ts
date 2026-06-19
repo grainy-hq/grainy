@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth/session"
 import { jsonError, jsonOk } from "@/lib/api/response"
+import { getSession } from "@/lib/auth/session"
 import { getFavoritePosts } from "@/lib/feed"
 
 export async function GET(request: Request) {

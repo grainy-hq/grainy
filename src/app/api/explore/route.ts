@@ -1,11 +1,11 @@
-import { getSession } from "@/lib/auth/session"
 import { jsonError, jsonOk } from "@/lib/api/response"
+import { getSession } from "@/lib/auth/session"
 import { db } from "@/lib/db/client"
 import {
-  explorePost,
-  exploreWow,
   exploreComment,
+  explorePost,
   exploreSave,
+  exploreWow,
   user,
 } from "@/lib/db/schema"
 import { uploadImage } from "@/lib/storage"
@@ -66,9 +66,7 @@ export async function GET(request: Request) {
 
   const authorMap = new Map(authors.map((a) => [a.id, a]))
   const wowCountMap = new Map(wowCounts.map((w) => [w.postId, w.count]))
-  const commentCountMap = new Map(
-    commentCounts.map((c) => [c.postId, c.count]),
-  )
+  const commentCountMap = new Map(commentCounts.map((c) => [c.postId, c.count]))
   const wowedSet = new Set(userWows.map((w) => w.postId))
   const savedSet = new Set(userSaves.map((s) => s.postId))
 

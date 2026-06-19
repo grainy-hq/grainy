@@ -1,5 +1,5 @@
-import { getSession } from "@/lib/auth/session"
 import { jsonError, jsonOk } from "@/lib/api/response"
+import { getSession } from "@/lib/auth/session"
 import { db } from "@/lib/db/client"
 import { explorePost, post, postImage, repost } from "@/lib/db/schema"
 import { and, eq } from "drizzle-orm"
@@ -41,9 +41,7 @@ export async function POST(request: Request) {
   await db.insert(post).values({
     id: newPostId,
     authorId: session.user.id,
-    caption: source.caption
-      ? `♻️ Repost\n\n${source.caption}`
-      : "♻️ Repost",
+    caption: source.caption ? `♻️ Repost\n\n${source.caption}` : "♻️ Repost",
   })
 
   if (source.imageUrl) {

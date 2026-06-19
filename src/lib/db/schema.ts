@@ -29,7 +29,9 @@ export const user = pgTable(
     bio: text("bio"),
     location: text("location"),
     bannedFromPosting: boolean("banned_from_posting").default(false).notNull(),
-    bannedFromCommenting: boolean("banned_from_commenting").default(false).notNull(),
+    bannedFromCommenting: boolean("banned_from_commenting")
+      .default(false)
+      .notNull(),
     isVerified: boolean("is_verified").default(false).notNull(),
     isPremium: boolean("is_premium").default(false).notNull(),
     profileBackground: text("profile_background"),
@@ -336,7 +338,9 @@ export const report = pgTable(
     reporterId: text("reporter_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
-    targetUserId: text("target_user_id").references(() => user.id, { onDelete: "cascade" }),
+    targetUserId: text("target_user_id").references(() => user.id, {
+      onDelete: "cascade",
+    }),
     targetPostId: text("target_post_id"),
     targetExplorePostId: text("target_explore_post_id"),
     reason: text("reason").notNull(),
@@ -450,22 +454,37 @@ export const explorePostRelations = relations(explorePost, ({ one, many }) => ({
 }))
 
 export const exploreWowRelations = relations(exploreWow, ({ one }) => ({
-  post: one(explorePost, { fields: [exploreWow.postId], references: [explorePost.id] }),
+  post: one(explorePost, {
+    fields: [exploreWow.postId],
+    references: [explorePost.id],
+  }),
   user: one(user, { fields: [exploreWow.userId], references: [user.id] }),
 }))
 
 export const exploreCommentRelations = relations(exploreComment, ({ one }) => ({
-  post: one(explorePost, { fields: [exploreComment.postId], references: [explorePost.id] }),
-  author: one(user, { fields: [exploreComment.authorId], references: [user.id] }),
+  post: one(explorePost, {
+    fields: [exploreComment.postId],
+    references: [explorePost.id],
+  }),
+  author: one(user, {
+    fields: [exploreComment.authorId],
+    references: [user.id],
+  }),
 }))
 
 export const exploreSaveRelations = relations(exploreSave, ({ one }) => ({
-  post: one(explorePost, { fields: [exploreSave.postId], references: [explorePost.id] }),
+  post: one(explorePost, {
+    fields: [exploreSave.postId],
+    references: [explorePost.id],
+  }),
   user: one(user, { fields: [exploreSave.userId], references: [user.id] }),
 }))
 
 export const repostRelations = relations(repost, ({ one }) => ({
-  explorePost: one(explorePost, { fields: [repost.explorePostId], references: [explorePost.id] }),
+  explorePost: one(explorePost, {
+    fields: [repost.explorePostId],
+    references: [explorePost.id],
+  }),
   user: one(user, { fields: [repost.userId], references: [user.id] }),
 }))
 

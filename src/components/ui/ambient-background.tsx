@@ -1,3 +1,3 @@
 export function AmbientBackground() {
-return null
+  return null
 }

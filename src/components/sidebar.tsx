@@ -2,26 +2,27 @@
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { GlassCard } from "@/components/ui/glass-card"
+import { VerifiedBadge } from "@/components/verified-badge"
 import { cn } from "@/lib/cn"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { ContactsWidget } from "./contacts-widget"
-import { VerifiedBadge } from "@/components/verified-badge"
+
 type SidebarProfile = {
-name: string;
-username: string | null
+  name: string
+  username: string | null
   image: string | null
   location: string | null
-  isVerified: boolean;
-isPremium: boolean;
-postCount: number;
-followerCount: number;
-followingCount: number
+  isVerified: boolean
+  isPremium: boolean
+  postCount: number
+  followerCount: number
+  followingCount: number
 }
 function profileNavItem(username: string | null) {
-if (!username) return null
+  if (!username) return null
   return {
-href: `/u/${username}`,
+    href: `/u/${username}`,
     label: "Profile",
     icon: (
       <svg
@@ -42,7 +43,7 @@ href: `/u/${username}`,
 }
 const navItems = [
   {
-href: "/feed",
+    href: "/feed",
     label: "Feed",
     icon: (
       <svg
@@ -61,7 +62,7 @@ href: "/feed",
     ),
   },
   {
-href: "/explore",
+    href: "/explore",
     label: "Explore",
     icon: (
       <svg
@@ -80,7 +81,7 @@ href: "/explore",
     ),
   },
   {
-href: "/favorites",
+    href: "/favorites",
     label: "My favorites",
     icon: (
       <svg
@@ -99,7 +100,7 @@ href: "/favorites",
     ),
   },
   {
-href: "/direct",
+    href: "/direct",
     label: "Direct",
     icon: (
       <svg
@@ -118,7 +119,7 @@ href: "/direct",
     ),
   },
   {
-href: "/settings",
+    href: "/settings",
     label: "Settings",
     icon: (
       <svg
@@ -144,7 +145,7 @@ href: "/settings",
 ]
 
 export function Sidebar({ profile }: { profile: SidebarProfile }) {
-const pathname = usePathname()
+  const pathname = usePathname()
 
   const allNavItems = [
     ...navItems.slice(0, 1),
@@ -159,14 +160,14 @@ const pathname = usePathname()
         <div className="px-5 pb-5">
           <Link
             href={profile.username ? `/u/${profile.username}` : "/settings"}
-className="-mt-8 flex flex-col items-center text-center"
+            className="-mt-8 flex flex-col items-center text-center"
           >
             <div className="gradient-ring rounded-full">
               {profile.image ? (
                 <img
                   src={profile.image}
-alt={profile.name}
-className="size-16 rounded-full object-cover ring-4 ring-[#0a0a12]"
+                  alt={profile.name}
+                  className="size-16 rounded-full object-cover ring-4 ring-[#0a0a12]"
                 />
               ) : (
                 <div className="bg-background gradient-text flex size-16 items-center justify-center rounded-full text-xl font-bold">
@@ -188,7 +189,7 @@ className="size-16 rounded-full object-cover ring-4 ring-[#0a0a12]"
               { value: profile.postCount, label: "Posts" },
               { value: formatCount(profile.followerCount), label: "Followers" },
               {
-value: formatCount(profile.followingCount),
+                value: formatCount(profile.followingCount),
                 label: "Following",
               },
             ].map((stat) => (
@@ -206,12 +207,12 @@ value: formatCount(profile.followingCount),
       <GlassCard className="p-2">
         <nav>
           {allNavItems.map((item) => {
-const active = pathname.startsWith(item.href);
-return (
+            const active = pathname.startsWith(item.href)
+            return (
               <Link
                 key={item.href}
-href={item.href}
-className={cn(
+                href={item.href}
+                className={cn(
                   "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all duration-200",
                   active
                     ? "nav-active-glow text-accent"
@@ -258,7 +259,7 @@ className={cn(
   )
 }
 function formatCount(n: number): string {
-if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
   return String(n)
 }

@@ -3,45 +3,46 @@
 import { CommentModal } from "@/components/comment-modal"
 import { ImageLightbox } from "@/components/image-lightbox"
 import { GlassCard } from "@/components/ui/glass-card"
+import { VerifiedBadge } from "@/components/verified-badge"
 import { cn } from "@/lib/cn"
 import Link from "next/link"
 import { useState } from "react"
-import { VerifiedBadge } from "@/components/verified-badge"
+
 type Author = {
-id: string;
-name: string;
-username: string | null
+  id: string
+  name: string
+  username: string | null
   image: string | null
-  isVerified: boolean;
-isPremium: boolean
+  isVerified: boolean
+  isPremium: boolean
 }
 function Avatar({
   user,
   size = "md",
 }: {
-user: Author
+  user: Author
   size?: "sm" | "md" | "lg"
 }) {
-const sizes = { sm: "size-8", md: "size-10", lg: "size-16" }
-const initials = user.name
+  const sizes = { sm: "size-8", md: "size-10", lg: "size-16" }
+  const initials = user.name
     .split(" ")
     .map((n) => n[0])
     .join("")
     .slice(0, 2)
-    .toUpperCase();
-if (user.image) {
-return (
+    .toUpperCase()
+  if (user.image) {
+    return (
       <img
         src={user.image}
-alt={user.name}
-className={cn(
+        alt={user.name}
+        className={cn(
           sizes[size],
           "rounded-full object-cover ring-2 ring-white/10",
         )}
       />
     )
   }
-return (
+  return (
     <div
       className={cn(
         sizes[size],
@@ -58,22 +59,22 @@ export function PostCard({
   onFavorite,
   onComment,
 }: {
-post: {
-id: string;
-caption: string | null
-    createdAt: string;
-author: Author
+  post: {
+    id: string
+    caption: string | null
+    createdAt: string
+    author: Author
     images: { id: string; url: string; sortOrder: number }[]
-    wowCount: number;
-commentCount: number;
-hasWowed: boolean;
-hasFavorited: boolean;
-}
-  onWow: (postId: string) => void;
-onFavorite: (postId: string) => void
+    wowCount: number
+    commentCount: number
+    hasWowed: boolean
+    hasFavorited: boolean
+  }
+  onWow: (postId: string) => void
+  onFavorite: (postId: string) => void
   onComment?: (postId: string) => void
 }) {
-const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
 
   const [showComments, setShowComments] = useState(false)
 
@@ -89,7 +90,7 @@ const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
           <div className="min-w-0 flex-1">
             <Link
               href={profileHref}
-className="hover:text-accent flex items-center gap-1.5 font-semibold transition"
+              className="hover:text-accent flex items-center gap-1.5 font-semibold transition"
             >
               {post.author.name}
               {post.author.isVerified && <VerifiedBadge />}
@@ -102,7 +103,7 @@ className="hover:text-accent flex items-center gap-1.5 font-semibold transition"
             {post.author.username && (
               <Link
                 href={profileHref}
-className="text-muted hover:text-accent text-sm transition"
+                className="text-muted hover:text-accent text-sm transition"
               >
                 @{post.author.username}
               </Link>
@@ -110,7 +111,7 @@ className="text-muted hover:text-accent text-sm transition"
           </div>
           <time className="text-muted shrink-0 text-xs">
             {new Date(post.createdAt).toLocaleDateString(undefined, {
-month: "short",
+              month: "short",
               day: "numeric",
             })}
           </time>
@@ -126,8 +127,8 @@ month: "short",
             {post.images.slice(0, 4).map((img, i) => (
               <button
                 key={img.id}
-onClick={() => setLightboxIndex(i)}
-className={cn(
+                onClick={() => setLightboxIndex(i)}
+                className={cn(
                   "relative cursor-pointer overflow-hidden bg-white/5 text-left",
                   post.images.length === 3 && i === 0 && "row-span-2",
                   post.images.length > 1 ? "aspect-square" : "aspect-video",
@@ -147,8 +148,8 @@ className={cn(
         {lightboxIndex !== null && (
           <ImageLightbox
             images={post.images}
-index={lightboxIndex}
-onClose={() => setLightboxIndex(null)}
+            index={lightboxIndex}
+            onClose={() => setLightboxIndex(null)}
           />
         )}
 
@@ -161,7 +162,7 @@ onClose={() => setLightboxIndex(null)}
         <footer className="flex items-center gap-2 border-t border-white/5 pt-4">
           <button
             onClick={() => onWow(post.id)}
-className={cn(
+            className={cn(
               "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition",
               post.hasWowed
                 ? "wow-active bg-accent-secondary/10"
@@ -177,7 +178,7 @@ className={cn(
 
           <button
             onClick={() => setShowComments(true)}
-className="text-muted hover:text-foreground flex items-center gap-2 rounded-full px-4 py-2 text-sm transition hover:bg-white/5"
+            className="text-muted hover:text-foreground flex items-center gap-2 rounded-full px-4 py-2 text-sm transition hover:bg-white/5"
           >
             <svg
               className="size-4"
@@ -198,27 +199,27 @@ className="text-muted hover:text-foreground flex items-center gap-2 rounded-full
           {showComments && (
             <CommentModal
               postId={post.id}
-onClose={() => {
-setShowComments(false);
-onComment?.(post.id)
+              onClose={() => {
+                setShowComments(false)
+                onComment?.(post.id)
               }}
             />
           )}
 
           <button
             onClick={() => onFavorite(post.id)}
-className={cn(
+            className={cn(
               "ml-auto rounded-full p-2 transition",
               post.hasFavorited
                 ? "fav-active bg-accent/10"
                 : "text-muted hover:text-accent hover:bg-white/5",
             )}
-aria-label="Add to favorites"
+            aria-label="Add to favorites"
           >
             <svg
               className="size-5"
               fill={post.hasFavorited ? "currentColor" : "none"}
-viewBox="0 0 24 24"
+              viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={1.75}
             >

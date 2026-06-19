@@ -1,9 +1,9 @@
-import { getSession } from "@/lib/auth/session"
 import { jsonError, jsonOk } from "@/lib/api/response"
-import { getUserPosts } from "@/lib/feed"
-import { areFriends } from "@/lib/friends"
+import { getSession } from "@/lib/auth/session"
 import { db } from "@/lib/db/client"
 import { friendRequest, post, user } from "@/lib/db/schema"
+import { getUserPosts } from "@/lib/feed"
+import { areFriends } from "@/lib/friends"
 import { and, count, eq, sql } from "drizzle-orm"
 
 export async function GET(
@@ -53,8 +53,11 @@ export async function GET(
       ),
     )
 
-  let friendshipStatus: "none" | "pending_sent" | "pending_received" | "friends" =
-    "none"
+  let friendshipStatus:
+    | "none"
+    | "pending_sent"
+    | "pending_received"
+    | "friends" = "none"
   let friendRequestId: string | null = null
 
   if (!isOwnProfile) {
@@ -97,12 +100,7 @@ export async function GET(
     }
   }
 
-  const posts = await getUserPosts(
-    profile.id,
-    session.user.id,
-    20,
-    0,
-  )
+  const posts = await getUserPosts(profile.id, session.user.id, 20, 0)
 
   return jsonOk({
     profile: {

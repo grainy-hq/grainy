@@ -9,23 +9,24 @@ import { db } from "@/lib/db/client"
 import { friendRequest, post } from "@/lib/db/schema"
 import { and, count, eq } from "drizzle-orm"
 import { redirect } from "next/navigation"
+
 export default async function AppLayout({
   children,
 }: {
-children: React.ReactNode
+  children: React.ReactNode
 }) {
-const user = await getCurrentUser();
-if (!user) {
-redirect("/sign-up")
+  const user = await getCurrentUser()
+  if (!user) {
+    redirect("/sign-up")
   }
-if (!user.onboardingComplete) {
-redirect("/onboarding")
+  if (!user.onboardingComplete) {
+    redirect("/onboarding")
   }
-const [postCount] = await db
+  const [postCount] = await db
     .select({ count: count() })
     .from(post)
-    .where(eq(post.authorId, user.id));
-const [followerCount] = await db
+    .where(eq(post.authorId, user.id))
+  const [followerCount] = await db
     .select({ count: count() })
     .from(friendRequest)
     .where(
@@ -33,8 +34,8 @@ const [followerCount] = await db
         eq(friendRequest.status, "accepted"),
         eq(friendRequest.receiverId, user.id),
       ),
-    );
-const [followingCount] = await db
+    )
+  const [followingCount] = await db
     .select({ count: count() })
     .from(friendRequest)
     .where(
@@ -42,9 +43,9 @@ const [followingCount] = await db
         eq(friendRequest.status, "accepted"),
         eq(friendRequest.senderId, user.id),
       ),
-    );
-const profile = {
-name: user.name,
+    )
+  const profile = {
+    name: user.name,
     username: user.username,
     image: user.image,
     location: user.location,
@@ -54,7 +55,7 @@ name: user.name,
     followerCount: followerCount?.count ?? 0,
     followingCount: followingCount?.count ?? 0,
   }
-return (
+  return (
     <div className="bg-background relative min-h-screen">
       <AnnouncementBanner />
       <AmbientBackground />

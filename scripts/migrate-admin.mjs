@@ -6,7 +6,10 @@ const token = "caK8LnHsXPmEzBovUdT6F1Z4NxG0YthQlegWjbAV3k7Ori5y2wCupDRIqJ9MSf"
 const db = drizzle(async (sqlStr, params, method) => {
   const r = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: "Bearer " + token,
+    },
     body: JSON.stringify({ sql: sqlStr, params, method }),
   })
   if (!r.ok) throw new Error(await r.text())

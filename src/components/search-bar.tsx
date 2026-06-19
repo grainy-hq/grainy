@@ -3,57 +3,58 @@
 import { GlassCard } from "@/components/ui/glass-card"
 import { fetchJson } from "@/lib/fetch-json"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+
 type SearchUser = {
-id: string;
-name: string;
-username: string | null
+  id: string
+  name: string
+  username: string | null
   bio: string | null
   location: string | null
   image: string | null
   isVerified: boolean
 }
 export function SearchBar() {
-const [query, setQuery] = useState("");
-const [results, setResults] = useState<SearchUser[]>([])
+  const [query, setQuery] = useState("")
+  const [results, setResults] = useState<SearchUser[]>([])
 
   const [open, setOpen] = useState(false)
 
   const [focused, setFocused] = useState(false)
 
-  const router = useRouter();
-useEffect(() => {
-if (query.length < 2) return
+  const router = useRouter()
+  useEffect(() => {
+    if (query.length < 2) return
     const timer = setTimeout(async () => {
-try {
-const data = await fetchJson<{ users: SearchUser[] }>(
+      try {
+        const data = await fetchJson<{ users: SearchUser[] }>(
           `/api/search?q=${encodeURIComponent(query)}`,
-        );
-setResults(data.users ?? []);
-setOpen(true)
+        )
+        setResults(data.users ?? [])
+        setOpen(true)
       } catch {
-setResults([])
+        setResults([])
       }
-    }, 300);
-return () => clearTimeout(timer)
-  }, [query]);
-const visibleResults = query.length >= 2 ? results : []
+    }, 300)
+    return () => clearTimeout(timer)
+  }, [query])
+  const visibleResults = query.length >= 2 ? results : []
 
   async function sendRequest(userId: string) {
-await fetch("/api/friends/requests", {
-method: "POST",
+    await fetch("/api/friends/requests", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
-    });
-setOpen(false);
-setQuery("");
-router.refresh()
+    })
+    setOpen(false)
+    setQuery("")
+    router.refresh()
   }
-return (
+  return (
     <div className="relative w-full">
       <GlassCard
         className={`flex items-center gap-3 px-5 py-1 transition-all duration-200 ${
-focused ? "ring-accent/20 ring-2" : ""
+          focused ? "ring-accent/20 ring-2" : ""
         }`}
       >
         <svg
@@ -71,13 +72,13 @@ focused ? "ring-accent/20 ring-2" : ""
         </svg>
         <input
           value={query}
-onChange={(e) => setQuery(e.target.value)}
-onFocus={() => {
-setFocused(true);
-if (query.length >= 2) setOpen(true)
+          onChange={(e) => setQuery(e.target.value)}
+          onFocus={() => {
+            setFocused(true)
+            if (query.length >= 2) setOpen(true)
           }}
-onBlur={() => setFocused(false)}
-placeholder="Search friends by name, username, or bio..."
+          onBlur={() => setFocused(false)}
+          placeholder="Search friends by name, username, or bio..."
           className="placeholder:text-muted/60 flex-1 bg-transparent py-3 text-sm outline-none"
         />
       </GlassCard>
@@ -90,20 +91,20 @@ placeholder="Search friends by name, username, or bio..."
           {visibleResults.map((user) => (
             <div
               key={user.id}
-className="flex items-center gap-3 border-b border-white/5 px-4 py-3 transition last:border-0 hover:bg-white/5"
+              className="flex items-center gap-3 border-b border-white/5 px-4 py-3 transition last:border-0 hover:bg-white/5"
             >
               <button
                 onClick={() => {
-if (user.username) router.push(`/u/${user.username}`);
+                  if (user.username) router.push(`/u/${user.username}`)
 
-setOpen(false)
+                  setOpen(false)
                 }}
-className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                className="flex min-w-0 flex-1 items-center gap-3 text-left"
               >
                 {user.image ? (
                   <img
                     src={user.image}
-alt=""
+                    alt=""
                     className="size-10 rounded-full object-cover ring-2 ring-white/10"
                   />
                 ) : (
@@ -121,7 +122,7 @@ alt=""
               </button>
               <button
                 onClick={() => sendRequest(user.id)}
-className="accent-btn shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold text-white"
+                className="accent-btn shrink-0 rounded-full px-4 py-1.5 text-xs font-semibold text-white"
               >
                 Add
               </button>

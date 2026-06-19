@@ -2,47 +2,48 @@
 
 import { GlassCard } from "@/components/ui/glass-card"
 import { fetchJson } from "@/lib/fetch-json"
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
+
 type Request = {
-id: string;
-createdAt: string;
-sender: {
-id: string;
-name: string;
-username: string | null
+  id: string
+  createdAt: string
+  sender: {
+    id: string
+    name: string
+    username: string | null
     image: string | null
     location: string | null
-    isVerified: boolean;
-}
+    isVerified: boolean
+  }
 }
 export function FriendRequests() {
-const [requests, setRequests] = useState<Request[]>([]);
-useEffect(() => {
-function fetchRequests() {
-fetchJson<{ requests: Request[] }>("/api/friends/requests")
+  const [requests, setRequests] = useState<Request[]>([])
+  useEffect(() => {
+    function fetchRequests() {
+      fetchJson<{ requests: Request[] }>("/api/friends/requests")
         .then((d) => setRequests(d.requests ?? []))
         .catch(() => {})
     }
-fetchRequests();
-const interval = setInterval(fetchRequests, 10_000);
-function onVisible() {
-if (document.visibilityState === "visible") fetchRequests()
+    fetchRequests()
+    const interval = setInterval(fetchRequests, 10_000)
+    function onVisible() {
+      if (document.visibilityState === "visible") fetchRequests()
     }
-document.addEventListener("visibilitychange", onVisible);
-return () => {
-clearInterval(interval);
-document.removeEventListener("visibilitychange", onVisible)
+    document.addEventListener("visibilitychange", onVisible)
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", onVisible)
     }
-  }, []);
-async function accept(id: string) {
-await fetch(`/api/friends/requests/${id}/accept`, { method: "POST" });
-setRequests((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+  async function accept(id: string) {
+    await fetch(`/api/friends/requests/${id}/accept`, { method: "POST" })
+    setRequests((prev) => prev.filter((r) => r.id !== id))
   }
-async function decline(id: string) {
-await fetch(`/api/friends/requests/${id}/decline`, { method: "POST" });
-setRequests((prev) => prev.filter((r) => r.id !== id))
+  async function decline(id: string) {
+    await fetch(`/api/friends/requests/${id}/decline`, { method: "POST" })
+    setRequests((prev) => prev.filter((r) => r.id !== id))
   }
-return (
+  return (
     <GlassCard className="p-5">
       <div className="mb-4 flex items-center justify-between">
         <h3 className="font-semibold">Requests</h3>
@@ -77,13 +78,13 @@ return (
           {requests.map((req) => (
             <div
               key={req.id}
-className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
+              className="rounded-xl border border-white/5 bg-white/[0.02] p-3"
             >
               <div className="flex items-center gap-3">
                 {req.sender.image ? (
                   <img
                     src={req.sender.image}
-alt=""
+                    alt=""
                     className="size-10 rounded-full object-cover ring-2 ring-white/10"
                   />
                 ) : (
@@ -105,13 +106,13 @@ alt=""
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => accept(req.id)}
-className="accent-btn flex-1 rounded-full py-2 text-xs font-semibold text-white"
+                  className="accent-btn flex-1 rounded-full py-2 text-xs font-semibold text-white"
                 >
                   Accept
                 </button>
                 <button
                   onClick={() => decline(req.id)}
-className="text-muted flex-1 rounded-full border border-white/10 py-2 text-xs font-medium transition hover:bg-white/5"
+                  className="text-muted flex-1 rounded-full border border-white/10 py-2 text-xs font-medium transition hover:bg-white/5"
                 >
                   Decline
                 </button>

@@ -12,7 +12,9 @@ async function fetchFeatures(): Promise<FeatureMap> {
   if (cachedFeatures) return cachedFeatures
   if (cachePromise) return cachePromise
 
-  cachePromise = fetchJson<{ features: { featureKey: string; enabled: boolean }[] }>("/api/admin/features")
+  cachePromise = fetchJson<{
+    features: { featureKey: string; enabled: boolean }[]
+  }>("/api/admin/features")
     .then((d) => {
       const map: FeatureMap = {}
       for (const f of d.features ?? []) {
@@ -22,7 +24,9 @@ async function fetchFeatures(): Promise<FeatureMap> {
       return map
     })
     .catch(() => ({}))
-    .finally(() => { cachePromise = null })
+    .finally(() => {
+      cachePromise = null
+    })
 
   return cachePromise
 }

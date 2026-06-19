@@ -1,17 +1,18 @@
 import { cn } from "@/lib/cn"
+
 export function GlassCard({
   children,
   className,
   strong = false,
 }: {
-children: React.ReactNode
+  children: React.ReactNode
   className?: string
   strong?: boolean
 }) {
-return (
+  return (
     <div
       className={cn(
-        "rounded-xl border border-border",
+        "border-border rounded-xl border",
         strong ? "bg-card" : "bg-card",
         className,
       )}
