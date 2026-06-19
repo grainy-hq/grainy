@@ -53,3 +53,13 @@ next-env.d.ts
 
 # local uploads (dev only)
 /public/uploads/
+
+# CI check / fix scripts
+__check_*.cjs
+__check_*.js
+check_*.cjs
+check_*.js
+__fix*.mjs
+fix-*.mjs
+__trace_*.cjs
+debug_*.cjs
