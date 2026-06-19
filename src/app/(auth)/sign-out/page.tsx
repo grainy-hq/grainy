@@ -1,34 +1,31 @@
 "use client"
 
+
 import { authClient } from "@/lib/auth-client"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
-
+import { useState } from "react";
 export default function SignOutPage() {
-  const router = useRouter()
-  const [error, setError] = useState<string | null>(null)
-  const [isPending, setIsPending] = useState(false)
-
-  async function handleSignOut() {
-    setError(null)
-    setIsPending(true)
-
-    await authClient.signOut({
-      fetchOptions: {
-        onSuccess: () => {
-          router.push("/")
-          router.refresh()
+const router = useRouter();
+const [error, setError] = useState<string | null>(null);
+const [isPending, setIsPending] = useState(false);
+async function handleSignOut() {
+setError(null);
+setIsPending(true);
+await authClient.signOut({
+fetchOptions: {
+onSuccess: () => {
+router.push("/");
+router.refresh()
         },
         onError: (ctx) => {
-          setError(ctx.error.message)
-          setIsPending(false)
+setError(ctx.error.message);
+setIsPending(false)
         },
       },
     })
   }
-
-  return (
+return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-6 py-16">
       <section className="w-full max-w-md rounded-3xl border border-black/[.08] bg-white p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.08)] dark:border-white/[.12] dark:bg-[#111]">
         <p className="mb-3 text-sm font-medium text-black/55 dark:text-white/55">
@@ -50,7 +47,7 @@ export default function SignOutPage() {
             className="bg-foreground text-background h-12 flex-1 rounded-full px-5 text-sm font-semibold transition hover:opacity-85 disabled:cursor-not-allowed disabled:opacity-60"
             type="button"
             onClick={handleSignOut}
-            disabled={isPending}
+disabled={isPending}
           >
             {isPending ? "Signing out..." : "Sign out"}
           </button>

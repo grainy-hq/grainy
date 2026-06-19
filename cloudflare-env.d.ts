@@ -4,6 +4,7 @@
 interface __BaseEnv_CloudflareEnv {
 	IMAGES: ImagesBinding;
 	ASSETS: Fetcher;
+	UPLOADS: R2Bucket;
 	NEXTJS_ENV: string;
 	WORKER_SELF_REFERENCE: Service<typeof import("./.open-next/worker").default>;
 }

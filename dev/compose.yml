@@ -28,7 +28,7 @@ services:
     image: kvqn/db-proxy:latest
     environment:
       DATABASE_URL: postgres://grainy:grainy@db:5432/grainy
-      TOKEN: token
+      TOKEN: caK8LnHsXPmEzBovUdT6F1Z4NxG0YthQlegWjbAV3k7Ori5y2wCupDRIqJ9MSf
     depends_on:
       db:
         condition: service_healthy

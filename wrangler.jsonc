@@ -27,6 +27,12 @@
       "service": "grainy",
     },
   ],
+  "r2_buckets": [
+    {
+      "binding": "UPLOADS",
+      "bucket_name": "grainy-uploads",
+    },
+  ],
   "observability": {
     "enabled": true,
   },
