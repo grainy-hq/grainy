@@ -9,11 +9,9 @@ export default function SignOutPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)
-
   async function handleSignOut() {
     setError(null)
     setIsPending(true)
-
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
@@ -27,7 +25,6 @@ export default function SignOutPage() {
       },
     })
   }
-
   return (
     <main className="bg-background text-foreground flex min-h-screen items-center justify-center px-6 py-16">
       <section className="w-full max-w-md rounded-3xl border border-black/[.08] bg-white p-8 text-center shadow-[0_24px_80px_rgba(0,0,0,0.08)] dark:border-white/[.12] dark:bg-[#111]">

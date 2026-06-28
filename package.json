@@ -10,6 +10,7 @@
     "start": "next start",
     "lint": "eslint . --no-cache",
     "typecheck": "tsc --noEmit",
+    "postinstall": "node scripts/patch-opennext.mjs",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "upload": "opennextjs-cloudflare build && opennextjs-cloudflare upload",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
@@ -26,6 +27,7 @@
     "better-auth": "1.6.18",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",
+    "openssl": "2.0.0",
     "react": "^19.1.7",
     "react-dom": "^19.1.7",
     "zod": "4.4.3"
